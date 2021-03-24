@@ -1,141 +1,120 @@
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.StringTokenizer;
 
 public class Beautiful_word {
 
-    public static void main(String[] args) throws IOException {
-        Reader in=new Reader();
-        PrintWriter out=new PrintWriter(System.out);
-
-        int T=in.nextInt();
-        for (int t = 0; t < T; t++) {
-
-        }
-
-
+    public static void main(String[] args) {
+        InputStream inputStream = System.in;// new FileInputStream("C:\\Users\\wavator\\Downloads\\test.in");
+        OutputStream outputStream = System.out;
+        InputReader in = new InputReader(inputStream);
+        PrintWriter out = new PrintWriter(outputStream);
+        Task solver = new Task();
+        solver.solve(in, out);
         out.close();
     }
 
+    static int length;
 
-    static class Reader
-    {
-        final private int BUFFER_SIZE = 1 << 16;
-        private DataInputStream din;
-        private byte[] buffer;
-        private int bufferPointer, bytesRead;
+    static class State {
+        int index;
+        int val;
+        boolean[] status;
 
-        public Reader()
-        {
-            din = new DataInputStream(System.in);
-            buffer = new byte[BUFFER_SIZE];
-            bufferPointer = bytesRead = 0;
-        }
+        public State(int index, int val, boolean[] status) {
+            this.index = index;
+            this.val = val;
+            this.status = status;
 
-        public Reader(String file_name) throws IOException
-        {
-            din = new DataInputStream(new FileInputStream(file_name));
-            buffer = new byte[BUFFER_SIZE];
-            bufferPointer = bytesRead = 0;
-        }
-
-        public String readLine() throws IOException
-        {
-            byte[] buf = new byte[64]; // line length
-            int cnt = 0, c;
-            while ((c = read()) != -1)
-            {
-                if (c == '\n')
-                    break;
-                buf[cnt++] = (byte) c;
-            }
-            return new String(buf, 0, cnt);
-        }
-
-        public int nextInt() throws IOException
-        {
-            int ret = 0;
-            byte c = read();
-            while (c <= ' ')
-                c = read();
-            boolean neg = (c == '-');
-            if (neg)
-                c = read();
-            do
-            {
-                ret = ret * 10 + c - '0';
-            }  while ((c = read()) >= '0' && c <= '9');
-
-            if (neg)
-                return -ret;
-            return ret;
-        }
-
-        public long nextLong() throws IOException
-        {
-            long ret = 0;
-            byte c = read();
-            while (c <= ' ')
-                c = read();
-            boolean neg = (c == '-');
-            if (neg)
-                c = read();
-            do {
-                ret = ret * 10 + c - '0';
-            }
-            while ((c = read()) >= '0' && c <= '9');
-            if (neg)
-                return -ret;
-            return ret;
-        }
-
-        public double nextDouble() throws IOException
-        {
-            double ret = 0, div = 1;
-            byte c = read();
-            while (c <= ' ')
-                c = read();
-            boolean neg = (c == '-');
-            if (neg)
-                c = read();
-
-            do {
-                ret = ret * 10 + c - '0';
-            }
-            while ((c = read()) >= '0' && c <= '9');
-
-            if (c == '.')
-            {
-                while ((c = read()) >= '0' && c <= '9')
-                {
-                    ret += (c - '0') / (div *= 10);
-                }
-            }
-
-            if (neg)
-                return -ret;
-            return ret;
-        }
-
-        private void fillBuffer() throws IOException
-        {
-            bytesRead = din.read(buffer, bufferPointer = 0, BUFFER_SIZE);
-            if (bytesRead == -1)
-                buffer[0] = -1;
-        }
-
-        private byte read() throws IOException
-        {
-            if (bufferPointer == bytesRead)
-                fillBuffer();
-            return buffer[bufferPointer++];
-        }
-
-        public void close() throws IOException
-        {
-            if (din == null)
-                return;
-            din.close();
         }
     }
 
+    static class Task {
+        public void solve(InputReader in, PrintWriter out) {
+            int T = in.nextInt();
+            for (int t = 0; t < T; t++) {
+                String str = in.next();
+                //create a 2-D array to store all words like "nr","st","th"...
+                int[][] matrix = new int[26][27];
+                char tmp = 0;
+                for (int i = 0; i < str.length(); i++) {
+                    char ch = str.charAt(i);
+                    if (ch != 'a' && ch != 'e' && ch != 'i' && ch != 'o' && ch != 'u') {
+                        if (tmp != 0 && tmp != ch) {
+                            matrix[tmp - 97][ch - 97]++;
+                            matrix[ch - 97][tmp - 97]++;
+                            matrix[tmp - 97][26]++;
+                            matrix[ch - 97][26]++;
+                        }
+                        tmp = ch;
+                    } else tmp = 0;
+                }
+                //dfs to traverse all situations
+                ArrayList<Integer> chars = new ArrayList<>();
+                for (int i = 0; i < 26; i++) {
+                    if (matrix[i][26] != 0) {
+                        chars.add(i);
+                    }
+                }
+                length = chars.size();
+                boolean[] status = new boolean[length];
+                int max = 0;
+                int val;
+                Deque<State> stack = new LinkedList<>();
+                stack.push(new State(0, 0, status));
+                boolean[] status2 = new boolean[length];
+                status2[0] = true;
+                stack.push(new State(0, matrix[chars.get(0)][26], status2));
+
+                while (!stack.isEmpty()) {
+                    State temp = stack.pop();
+                    if (temp.index == length - 1) {
+                        max = Math.max(max, temp.val);
+                        continue;
+                    }
+                    temp.status[temp.index + 1] = false;
+                    stack.push(new State(temp.index + 1, temp.val, temp.status));
+
+                    val = temp.val + matrix[chars.get(temp.index + 1)][26];
+                    for (int i = 0; i <= temp.index; i++) {
+                        if (temp.status[i])
+                            val -= matrix[chars.get(temp.index + 1)][chars.get(i)] << 1;
+                    }
+                    boolean[] stat = new boolean[length];
+                    System.arraycopy(temp.status, 0, stat, 0, temp.index + 1);
+                    stat[temp.index + 1] = true;
+                    stack.push(new State(temp.index + 1, val, stat));
+                }
+                out.println(max);
+            }
+        }
+    }
+
+
+    static class InputReader {
+        public BufferedReader reader;
+        public StringTokenizer tokenizer;
+
+        public InputReader(InputStream stream) {
+            reader = new BufferedReader(new InputStreamReader(stream), 32768);
+            tokenizer = null;
+        }
+
+        public String next() {
+            while (tokenizer == null || !tokenizer.hasMoreTokens()) {
+                try {
+                    tokenizer = new StringTokenizer(reader.readLine());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return tokenizer.nextToken();
+        }
+
+        public int nextInt() {
+            return Integer.parseInt(next());
+        }
+    }
 }
