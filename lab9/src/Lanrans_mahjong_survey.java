@@ -33,11 +33,11 @@ public class Lanrans_mahjong_survey {
         for (int i = 0; i < n; i++) {
             u[i]=lanrans[n-1-i].vCnt;
         }
-        //System.out.println(Arrays.toString(u));
+        
         cnt=new int[n];
         mergeSort(u);
         int[] ans=new int[n];
-        //System.out.println(Arrays.toString(cnt));
+        
         for (int i = 0; i < n; i++) {
             ans[cnt[i]]++;
         }
